@@ -1,77 +1,68 @@
---1.количество исполнителей в каждом жанре;
+**Задание 2**
 
-select g.gengre_name, count(singer_id) from singersgenres sg
-left join genres g on g.genre_id = sg.genre_id
-group by g.gengre_name;
+** Название и продолжительность самого длительного трека.
 
+select name_, duration from tracks
+WHERE duration = (SELECT MAX(duration) FROM tracks);
 
---2.количество треков, вошедших в альбомы 2019-2020 годов;
-select count(*) Количество from songs s
-left join albums a on s.album = a.album_id
-where DATE_PART('year', a.album_year_of_issue::date) between 2019 and 2020;
+** Название треков, продолжительность которых не менее 3,5 минут.
 
---3.средняя продолжительность треков по каждому альбому;
+select name_ from tracks
+where duration > '00:03:30';
 
-select a.album_name , avg(s.song_duration) from songs s
-left join albums a on s.album = a.album_id
-group by a.album_name;
+** Названия сборников, вышедших в период с 2018 по 2020 год включительно.
 
---4.все исполнители, которые не выпустили альбомы в 2020 году;
+select name_ from collections c 
+where release_year > 2017 and release_year < 2021;
 
-select s.singer_name from albums a 
-left join singersalbums sa on sa.album_id = a.album_id
-left join singers s on s.singer_id = sa.singer_id 
-where not DATE_PART('year', a.album_year_of_issue::date) = 2020
-group by s.singer_name;
+** Исполнители, чьё имя состоит из одного слова.
 
---5.названия сборников, в которых присутствует конкретный исполнитель (выберите сами);
+select name_ from artists
+WHERE (LENGTH(name_) - LENGTH(replace(name_, ' ', ''))) = 0;
 
-select distinct collection_name from collections c
-left join collectionssongs cs on cs.collection_id = c.collection_id 
-left join songs s on cs.song_id = s.song_id 
-left join albums a on s.album = a.album_id 
-left join singersalbums sa on a.album_id = sa.album_id 
-left join singers s2 on s2.singer_id = sa.singer_id
-where s2.singer_name like 'Kanye West';
+** Название треков, которые содержат слово «мой» или «my».
 
--- 6. название альбомов, в которых присутствуют исполнители более 1 жанра;
+select name_ from tracks t 
+where name_ like '%my%';
 
-select sg.singer_id, count(sg.genre_id) from albums a 
-left join singersalbums sa on a.album_id = sa.album_id 
-left join singers s on s.singer_id = sa.singer_id
-left join singersgenres sg on sg.singer_id = s.singer_id 
-group by sg.singer_id;
+**Задание 3**
 
-select a.album_name  from albums a
-left join singersalbums sa on sa.album_id = a.album_id 
-left join singers s on s.singer_id = sa.singer_id 
-left join singersgenres sg on sg.singer_id = s.singer_id 
-left join genres g on g.genre_id = sg.genre_id 
-group by a.album_name 
-having count(distinct g.gengre_name) > 1;
+** Количество исполнителей в каждом жанре.
 
---7. наименование треков, которые не входят в сборники;
-select s.song_name, c.collection_id  from songs s 
-left join collectionssongs c on c.song_id = s.song_id 
-where c.collection_id is null;
+select genres.name_, count(ag.artist_id) FROM genres
+LEFT JOIN artists_genres ag ON genres.genre_id = ag.genre_id
+LEFT join artists a on ag.artist_id = a.artist_id 
+GROUP BY genres.name_ 
 
---8. исполнителя(-ей), написавшего самый короткий по продолжительности трек (теоретически таких треков может быть несколько);
--- select min(song_duration) from songs s
+** Количество треков, вошедших в альбомы 2019–2020 годов.
 
-select s2.singer_name from songs s
-left join albums a on s.album = a.album_id 
-left join singersalbums sa on a.album_id = sa.album_id 
-left join singers s2 on s2.singer_id = sa.singer_id
-where s.song_duration = (select min(song_duration) from songs s
-);
+SELECT albums.name_, COUNT(tracks.track_id) from albums
+LEFT JOIN tracks ON tracks.album_id = albums.album_id
+WHERE albums.release_year > 2018 and albums.release_year < 2021
+GROUP BY albums.name_ 
 
---9. название альбомов, содержащих наименьшее количество треков.
-select a.album_name, count(*) from albums a
-left join songs s on s.album = a.album_id 
-group by a.album_name
-having count(*) = 
-				(select count(*) from albums a
-				left join songs s on s.album = a.album_id 
-				group by a.album_name
-				order by count(*) 
-				limit 1);
+** Средняя продолжительность треков по каждому альбому.
+
+SELECT albums.name_, AVG(duration) FROM albums
+LEFT JOIN tracks on tracks.album_id = albums.album_id
+GROUP BY albums.name_
+ORDER BY AVG(duration) DESC;
+
+** Все исполнители, которые не выпустили альбомы в 2020 году.
+
+SELECT artists.name_, albums.name_, albums.release_year  FROM artists
+LEFT JOIN albums_artists on artists.artist_id = albums_artists.artist_id
+LEFT JOIN albums on albums_artists.album_id = albums.album_id
+WHERE albums.release_year != 2020
+GROUP BY artists.name_, albums.name_, albums.release_year
+
+** Названия сборников, в которых присутствует конкретный исполнитель (выберите его сами).
+
+SELECT collections.name_ FROM artists
+LEFT JOIN albums_artists on artists.artist_id = albums_artists.artist_id
+LEFT JOIN albums on albums_artists.album_id = albums.album_id
+LEFT JOIN tracks on albums.album_id= tracks.album_id
+LEFT JOIN tracks_collections on tracks.track_id= tracks_collections.track_id
+LEFT JOIN collections on tracks_collections.collection_id = collections.collection_id
+WHERE artists.name_ = 'Metallica'
+GROUP BY collections.name_
