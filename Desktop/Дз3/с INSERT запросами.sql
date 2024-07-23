@@ -1,3 +1,4 @@
+**Задание 1**
 CREATE TABLE IF NOT EXISTS albums (
 		album_ID SERIAL PRIMARY KEY,
 		name_ varchar(80) NOT NULL,
