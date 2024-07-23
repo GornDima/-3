@@ -50,19 +50,9 @@ ORDER BY AVG(duration) DESC;
 
 ** Все исполнители, которые не выпустили альбомы в 2020 году.
 
-SELECT artists.name_, albums.name_, albums.release_year  FROM artists
-LEFT JOIN albums_artists on artists.artist_id = albums_artists.artist_id
-LEFT JOIN albums on albums_artists.album_id = albums.album_id
-WHERE albums.release_year != 2020
-GROUP BY artists.name_, albums.name_, albums.release_year
+select name from artists ar
+where name not in (select ar.name from artists ar
+join albumsartists aa on ar.id = aa.artist_id
+join albums al on aa.album_id = al.id
+where al.year_of_release = 2020);
 
-** Названия сборников, в которых присутствует конкретный исполнитель (выберите его сами).
-
-SELECT collections.name_ FROM artists
-LEFT JOIN albums_artists on artists.artist_id = albums_artists.artist_id
-LEFT JOIN albums on albums_artists.album_id = albums.album_id
-LEFT JOIN tracks on albums.album_id= tracks.album_id
-LEFT JOIN tracks_collections on tracks.track_id= tracks_collections.track_id
-LEFT JOIN collections on tracks_collections.collection_id = collections.collection_id
-WHERE artists.name_ = 'Metallica'
-GROUP BY collections.name_
